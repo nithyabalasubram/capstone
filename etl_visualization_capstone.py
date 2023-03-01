@@ -445,11 +445,11 @@ def validate_zipcode():
    while True:
 
         # Getting the zipcode as input.
-        zipcode = input("\nPlease enter the ZIP code in 5 digits: ")
+        zipcode = input("\nPlease enter the ZIP code in 4 or 5 digits: ")
         zipcode = zipcode.strip()
 
         # Checking if the zipcode has only numbers and is of length 5.
-        if zipcode.isdigit() and len(zipcode) == 5:
+        if zipcode.isdigit() and (len(zipcode) == 4 or len(zipcode) == 5):
            zipcode = int(zipcode)
            # If the zipcode has only numbers and is of length 5 then it is a valid zipcode.
            print('Zipcode {} is valid.'.format(zipcode))
@@ -486,8 +486,9 @@ def transaction_customer_for_zip_month_year():
     # descending order.
     
     df_result = spark.sql("SELECT \
+    CU.FIRST_NAME, CU.MIDDLE_NAME, CU.LAST_NAME, \
     REPLACE(CR.CUST_CC_NO, SUBSTR(CR.CUST_CC_NO, 1, 12), '************') AS CREDIT_CARD_NO, \
-    TO_DATE(CONCAT(SUBSTR(CR.TIMEID, 5, 2), '-', SUBSTR(CR.TIMEID, 7, 2), '-', SUBSTR(CR.TIMEID, 1, 4)) , 'mm-dd-yyyy') AS TRANSACTION_DATE, \
+    CONCAT(SUBSTR(CR.TIMEID, 1, 4), '-', SUBSTR(CR.TIMEID, 5, 2), '-', SUBSTR(CR.TIMEID, 7, 2)) AS TRANSACTION_DATE, \
     CR.BRANCH_CODE, CR.TRANSACTION_TYPE, ROUND(CR.TRANSACTION_VALUE, 2) AS TRANSACTION_VALUE, \
     CR.TRANSACTION_ID \
     FROM CREDITVIEW AS CR \
@@ -576,12 +577,12 @@ def number_and_total_transaction_values_for_branches(branch_states):
 
     # Display the number and total values of transactions for
     # branches in a given state.
-    df_result = spark.sql("SELECT B.BRANCH_CODE, COUNT(C.TRANSACTION_ID) AS NUMBER_OF_TRANSACTIONS, \
+    df_result = spark.sql("SELECT COUNT(C.TRANSACTION_ID) AS NUMBER_OF_TRANSACTIONS, \
     ROUND(SUM(C.TRANSACTION_VALUE), 2) AS TRANSACTION_VALUE \
     FROM BRANCHVIEW AS B \
     JOIN CREDITVIEW AS C ON B.BRANCH_CODE = C.BRANCH_CODE \
     WHERE B.BRANCH_STATE ='{}' \
-    GROUP BY B.BRANCH_CODE".format(state))
+    GROUP BY B.BRANCH_NAME".format(state))
 
     print("\nThe number and total values of transactions for branches in the State {}:".format(state))
 
@@ -1055,8 +1056,10 @@ def credit_card_monthly_bill_for_a_month_and_year(cardnumbers):
 
 def transactions_by_a_customer_between_dates(ssnno):
 
+   
     # Validating the credit card number.
-    ssn = validate_ssn(ssnno)
+    cardno = validate_credit_card_no(cardnumbers)
+
 
     # # Validating the credit card number.
     # cardno = validate_credit_card_no()
@@ -1088,24 +1091,23 @@ def transactions_by_a_customer_between_dates(ssnno):
     startdate = startyear + '-' + startmonth + '-' + startday
     enddate = endyear + '-' + endmonth + '-' + endday
 
-    ssn_num = int(ssn)
-  
+ 
    
     # Fetching the records to display the transactions made by a customer between
     # two dates. Order by year, month, and day in descending order.
 
     df_result = spark.sql(f"SELECT REPLACE(CUST_CC_NO, SUBSTR(CUST_CC_NO, 1, 12), '************')  AS CREDIT_CARD_NO, \
-    TO_DATE(CONCAT(SUBSTR(TIMEID, 5, 2), '-', SUBSTR(TIMEID, 7, 2), '-', SUBSTR(TIMEID, 1, 4)) , 'mm-dd-yyyy') AS TRANSACTION_DATE, \
+    CONCAT(SUBSTR(TIMEID, 1, 4), '-', SUBSTR(TIMEID, 5, 2), '-', SUBSTR(TIMEID, 7, 2)) AS TRANSACTION_DATE, \
     BRANCH_CODE, TRANSACTION_TYPE, ROUND(TRANSACTION_VALUE, 2) AS TRANSACTION_VALUE, \
     TRANSACTION_ID FROM CREDITVIEW \
-    WHERE CUST_SSN = {ssn_num} AND (TIMEID >= '{starttimeid}' \
+    WHERE CUST_CC_NO = '{cardno}' AND (TIMEID >= '{starttimeid}' \
     AND TIMEID <= '{endtimeid}') \
     ORDER BY YEAR(TO_DATE(TIMEID, 'yyyyMMdd')) DESC, MONTH(TO_DATE(TIMEID, 'yyyyMMdd')) DESC, DAY(TO_DATE(TIMEID, 'yyyyMMdd')) DESC")
 
     # Checking whether an entry exists in the database for the given input.
     if df_result.isEmpty():
         
-        print('\nNo records matching the SSN ending with the last 4 digits {} with the start date {} and the end date {} found.'.format(ssn[5:], startdate, enddate))
+        print('\nNo records matching the creditcard number ending with the last 4 digits {} with the start date {} and the end date {} found.'.format(cardno[12:], startdate, enddate))
     
     # displaying the transactions made by a customer between
     # two dates. Order by year, month, and day in descending order.
@@ -1134,7 +1136,7 @@ def high_rate_of_tran_by_tran_type(df_tran):
 
 
     # Plotting the transaction type that has a high rate of transactions.
-    types.plot(kind='barh', figsize=(10, 5),  xlim=(6000,7000), color = no_of_colors)
+    types.plot(kind='barh', figsize=(12, 5),  xlim=(6000,7000), color = no_of_colors)
 
  
     # Setting the title of the plot.
@@ -1317,30 +1319,36 @@ def get_loan_info(USER, PWD):
 def approved_applications_for_self_employed(df_loan_data):
 
 
-     # Getting the loan applicstion data for the application approved for self-employed applicants.
-     df_loan_info = df_loan_data[df_loan_data['Application_Status'] == 'Y'][['Self_Employed']].value_counts()
+     # Getting the loan applicstion data for the application approved for self-employed applicants.,
+     df_loan_info = df_loan_data[['Application_Status','Self_Employed']].value_counts()
 
-       
+     colors_list = ['yellowgreen', 'lightcoral', 'lightskyblue', 'gold'] 
+     
+        
      # Plotting the pie chart for the percentage of applications approved for self-employed applicants.
      df_loan_info.plot(kind='pie',
-                             figsize=(10, 5),
+                             figsize=(12, 6),
                              autopct='%1.2f%%', 
                              startangle=90,
                              labels=None,         # turn off labels on pie chart
                              pctdistance=1.12,    # the ratio between the center of each pie slice and the start of the text generated by autopct 
+                             legend = True,
+                             explode=(0, 0, 0.1, 0),
+                             colors=colors_list
                              )
 
 
      # Scale the title up by 12% to match pctdistance
-     plt.title('Percentage of Approved Applications for Self-Employed Applicants', y=1.12, fontweight = 'bold', fontsize = 18) 
+     plt.title('Percentage of Applications Approved for Self-Employed Applicants', y=1.07, fontweight = 'bold', fontsize = 15) 
 
      plt.axis('equal') 
 
      # Adding the legend
-     legend_labels = ['Self Employed - No', 'Self Employed - Yes']
-     plt.legend(labels=legend_labels) 
+     legend_labels = ['Approved Not Self-Employed', 'Not Approved Not Self-Employed', 'Approved Self-Employed', 'Not Approved Self-Employed' ]  
+     plt.legend(labels=legend_labels) #, loc = 'upper left' ) 
 
      plt.show()
+
 
 
 
@@ -1348,25 +1356,34 @@ def approved_applications_for_self_employed(df_loan_data):
 def percentage_of_rejection_for_married_male(df_loan_data):
 
     # Getting the loan application data for the percentage of rejections for married male applicants.
-    df_loan = df_loan_data[(df_loan_data['Gender'] == 'Male') & (df_loan_data['Married'] == 'Yes')][['Application_Status']].value_counts()
+    df_loan = df_loan_data[['Application_Status', 'Married', 'Gender']].value_counts()
 
+    colors_list = ['yellowgreen', 'lightcoral', 'lightskyblue', 'lightgreen', 'pink', 'lightblue', 'lightgrey',  'gold']
+    
     # Plotting  a pie chart to show the percentage of rejection for married male applicants.
     df_loan.plot(kind='pie',
-                            figsize=(10, 5),
+                            figsize=(14, 6),
                             autopct='%1.2f%%', 
-                            startangle=90,
+                            startangle=250,
                             labels=None,         # turn off labels on pie chart
-                            pctdistance=1.12,    # the ratio between the center of each pie slice and the start of the text generated by autopct 
+                            pctdistance=1.12,    # the ratio between the center of each pie slice and the start of the text generated by autopct
+                            legend = True,
+                            explode=(0, 0.1, 0, 0, 0, 0, 0, 0),
+                            colors = colors_list
                            )
 
     # Scale the title up by 12% to match pctdistance
     plt.title('Percentage of Rejections for Married Male Applicants', 
-              y=1.12, fontweight = 'bold', fontsize = 18) 
+               y=1.07, fontweight = 'bold', fontsize = 18) 
 
     plt.axis('equal') 
 
     # Adding the legend
-    legend_labels = ['Approved', 'Rejected']
+    legend_labels = ['(Approved, Married, Male)', '(Not Approved, Married, Male)', '(Approved, Not Married, Male)', 
+                     '(Not Approved, Not Married, Male)', '(Approved, Not Married, Female)', 
+                     '(Not Approved, Not Mariied, Female)', '(Approved, Married, Female)', 
+                     '(Not Approved, Married, Female)']
+                 
     plt.legend(labels=legend_labels) 
 
     plt.show()
@@ -1434,8 +1451,8 @@ def branch_with_highest_total_dollar_value(df_tran):
     health_series = health.set_index('BRANCH_CODE').squeeze()
     for index, value in health_series.items():
         if value == health_series.max(axis=0):
-            plt.text(index-4, value-120, 'Highest Total value', bbox=dict(facecolor='yellow',alpha=0.5), fontweight = 'bold')
-            plt.text(index-0, value-220, value, bbox=dict(facecolor='yellow',alpha=0.5), fontweight = 'bold')
+            plt.text(index-8, value-120, 'Highest Total value', bbox=dict(facecolor='yellow',alpha=0.5), fontweight = 'bold')
+            plt.text(index-1, value-230, '$' + str(value), bbox=dict(facecolor='yellow',alpha=0.5), fontweight = 'bold')
         plt.text(index+1, value-20, '#'+str(index))
      
     
