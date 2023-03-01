@@ -726,7 +726,7 @@ def check_customer_account_details(cardnumbers, df_cus, fstname, lstname):
             '3) Use SSN to get the account details.\n')
    
     print(menu)
-    opt= input('Please choose option 1 for Credit Card or 2 for Phone Number or 3 for SSNr: ')
+    opt= input('Please choose option 1 for Credit Card or 2 for Phone Number or 3 for SSN: ')
     opt = opt.strip()
 
     # Creditcard number.
@@ -734,13 +734,8 @@ def check_customer_account_details(cardnumbers, df_cus, fstname, lstname):
 
         # Validating the credit card number.
         cardno = validate_credit_card_no(cardnumbers)
-
-        # Validate the first name.
-        fname = validate_firstname(fstname)
-     
-        # Validate the last name.
-        lname = validate_lastname(lstname) 
     
+   
     # Phone number.    
     elif opt == '2':
 
@@ -753,9 +748,9 @@ def check_customer_account_details(cardnumbers, df_cus, fstname, lstname):
         # Validate the last name.
         lname = validate_lastname(lstname) 
 
+   
     # SSN.   
     elif opt == '3':
-
 
         # Validate the credit card number.
         ssn = validate_ssn(ssnno)
@@ -777,7 +772,7 @@ def check_customer_account_details(cardnumbers, df_cus, fstname, lstname):
         REPLACE(CREDIT_CARD_NO, SUBSTR(CREDIT_CARD_NO, 1, 12), '************') AS CREDIT_CARD_NO, \
         FULL_STREET_ADDRESS, CUST_CITY AS CITY, CUST_STATE AS STATE, CUST_COUNTRY AS COUNTRY, CUST_ZIP AS ZIP, \
         CUST_PHONE AS PHONE_NUMBER, CUST_EMAIL AS EMAIL, LAST_UPDATED \
-        FROM CUSTOMERVIEW WHERE CREDIT_CARD_NO = '{cardno}' AND FIRST_NAME = '{fname}' AND LAST_NAME = '{lname}'")
+        FROM CUSTOMERVIEW WHERE CREDIT_CARD_NO = '{cardno}'")
 
     # Phone Number.
     elif opt == '2':
@@ -907,7 +902,7 @@ def modify_existing_account_details_of_a_customer(customer_columns, ssnno, state
                                     
                                     # Checking if it is has only digits and is of address structure.
                                     if apt.isdigit() or aptno.isdigit():
-                                        if re.match(r"\d+,?(?:[A-Za-z0-9.-]+[ ]?)+(?:Avenue|Lane|Road|Boulevard|Drive|Street|Ave|Dr|Rd|Blvd|Ln|St)\.?", new_entry):
+                                        if re.match(r"\d+[,]?[\s+]?(?:[A-Za-z0-9.-]+[ ]?)+(?:Avenue|Lane|Road|Boulevard|Drive|Street|Ave|Dr|Rd|Blvd|Ln|St)\.?", new_entry):
                                             cus_data['FULL_STREET_ADDRESS'] = new_entry 
                                             cus_data['COUNT'] += 1  
                                             break
@@ -1322,7 +1317,7 @@ def approved_applications_for_self_employed(df_loan_data):
      # Getting the loan applicstion data for the application approved for self-employed applicants.,
      df_loan_info = df_loan_data[['Application_Status','Self_Employed']].value_counts()
 
-     colors_list = ['yellowgreen', 'lightcoral', 'lightskyblue', 'gold'] 
+     colors_list = ['yellowgreen', 'lightcoral', 'gold', 'lightblue'] 
      
         
      # Plotting the pie chart for the percentage of applications approved for self-employed applicants.
@@ -1358,7 +1353,7 @@ def percentage_of_rejection_for_married_male(df_loan_data):
     # Getting the loan application data for the percentage of rejections for married male applicants.
     df_loan = df_loan_data[['Application_Status', 'Married', 'Gender']].value_counts()
 
-    colors_list = ['yellowgreen', 'lightcoral', 'lightskyblue', 'lightgreen', 'pink', 'lightblue', 'lightgrey',  'gold']
+    colors_list = ['yellowgreen', 'gold', 'lightskyblue', 'lightgreen', 'pink', 'lightblue', 'lightgrey',  'lightcoral']
     
     # Plotting  a pie chart to show the percentage of rejection for married male applicants.
     df_loan.plot(kind='pie',
@@ -1440,11 +1435,11 @@ def branch_with_highest_total_dollar_value(df_tran):
     
     
     # Setting the title.
-    plt.title('Total Dollar Value of Healthcare Transactions Per Branch', fontweight = 'bold', fontsize = 25)
+    plt.title('Total Dollar Value of Healthcare Transactions Per Branch', fontweight = 'bold', fontsize = 22)
     # Setting the x-label.
-    plt.xlabel('Branch Number', fontweight = 'bold', fontsize = 20)
+    plt.xlabel('Branch Number', fontweight = 'bold', fontsize = 17)
     # Setting the y-label.
-    plt.ylabel('Total Value of Healthcare Transactions', fontweight = 'bold', fontsize = 20)
+    plt.ylabel('Total Value of Healthcare Transactions', fontweight = 'bold', fontsize = 17)
     
 
     # Displaying the branch that has the highest total with the highest total box.
