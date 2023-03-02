@@ -74,9 +74,15 @@ After data is loaded into the database, users can make changes from the front en
 
 3.1) Find and plot which transaction type has a high rate of transactions.
 
+![image](https://user-images.githubusercontent.com/118311700/222370781-37f95a0b-b13e-4c31-8497-1d564569a003.png)
+
 3.2) Find and plot which state has a high number of customers.
 
+![image](https://user-images.githubusercontent.com/118311700/222371061-b656c63f-a706-4ed1-b596-3f269b308a32.png)
+
 3.3) Find and plot the sum of all transactions for the top 10 customers, and which customer has the highest transaction amount.
+
+![image](https://user-images.githubusercontent.com/118311700/222379962-d5bd9e86-e72f-40b6-ace6-ca70a5b8b986.png)
 
 
 ### Overview of LOAN application Data API
