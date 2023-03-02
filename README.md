@@ -149,6 +149,10 @@ Use Python libraries for the below requirements:
 
 ![image](https://user-images.githubusercontent.com/118311700/222386366-3b2b88cd-be3a-4205-9224-2fc2219ab5d6.png)
 
+## Tableau Dashboard Link
+
+https://public.tableau.com/app/profile/nithya.balasubramanian/viz/Credit_Card_Transactions_Dashboard/CreditCardTransactionsDashboard
+
 
 ## Technical Challenges
 
