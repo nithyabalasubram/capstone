@@ -1049,15 +1049,11 @@ def credit_card_monthly_bill_for_a_month_and_year(cardnumbers):
 # Function to display the transactions made by a customer between two dates.
 # Order by year, month and day in descending order.
 
-def transactions_by_a_customer_between_dates(ssnno):
+def transactions_by_a_customer_between_dates(cardnumbers):
 
    
     # Validating the credit card number.
     cardno = validate_credit_card_no(cardnumbers)
-
-
-    # # Validating the credit card number.
-    # cardno = validate_credit_card_no()
 
     # Validating the startday.
     startday = validate_day('start day')
@@ -1764,7 +1760,7 @@ if __name__ == '__main__':
                     
                     # Display the transactions made by a customer between
                     # two dates. Order by year, month, and day in descending order.
-                    transactions_by_a_customer_between_dates(ssnno)
+                    transactions_by_a_customer_between_dates(cardnumbers)
 
 
                     while True:
