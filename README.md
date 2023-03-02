@@ -1,7 +1,5 @@
 # capstone
 Capstone project
-# Per Scholas Capstone
-#### Final project for the Per Scholas Data Engineering course
 
 ## Project requirements:
 
@@ -44,7 +42,7 @@ Once PySpark reads data from JSON files, and then utilizes Python, PySpark, and 
 
 a) Create a Database in SQL(MariaDB), named “creditcard_capstone.”
 
-b) Create a Python and Pyspark Program to load/write the “Credit Card System Data” into RDBMS(creditcard_capstone)
+b) Create a Python and Pyspark Program to load/write the “Credit Card System Data” into RDBMS(creditcard_capstone).
 - Tables should be created by the following names in RDBMS:
 	- CDW_SAPP_BRANCH
 	- CDW_SAPP_CREDIT_CARD
@@ -75,16 +73,19 @@ After data is loaded into the database, users can make changes from the front en
 3.1) Find and plot which transaction type has a high rate of transactions.
 
 
+
 ![image](https://user-images.githubusercontent.com/118311700/222370781-37f95a0b-b13e-4c31-8497-1d564569a003.png)
 
 
 3.2) Find and plot which state has a high number of customers.
 
 
+
 ![image](https://user-images.githubusercontent.com/118311700/222371061-b656c63f-a706-4ed1-b596-3f269b308a32.png)
 
 
 3.3) Find and plot the sum of all transactions for the top 10 customers, and which customer has the highest transaction amount.
+
 
 
 ![image](https://user-images.githubusercontent.com/118311700/222379962-d5bd9e86-e72f-40b6-ace6-ca70a5b8b986.png)
@@ -119,20 +120,23 @@ visualize the data according to the below requirements.
 Use Python libraries for the below requirements:
 ### Req-5 Data Analysis and Visualization
 5.1) Find and plot the percentage of applications approved for self-employed applicants.
+
+9% Self-EmployedApplicants gets their loan approved.
     
-    9% Self-EmployedApplicants gets their loan approved.
     
 
 ![image](https://user-images.githubusercontent.com/118311700/222381796-148109d0-8663-4a7a-aa31-757bde42c662.png)
 
 5.2) Find the percentage of rejection for married male applicants.
+
+17.03% married males are rejected for loan approval.
      
-     17.03% married males are rejected for loan approval.
      
 
 ![image](https://user-images.githubusercontent.com/118311700/222382241-a83b2acd-f596-40c8-9dcf-f24e5158d954.png)
 
 5.3) Find and plot the top three months with the largest transaction data.
+
 
 
 ![image](https://user-images.githubusercontent.com/118311700/222385708-4eec400b-9240-482b-944c-eb3d41e0317a.png)
@@ -142,7 +146,9 @@ Use Python libraries for the below requirements:
 
 
 
+
 ![image](https://user-images.githubusercontent.com/118311700/222386366-3b2b88cd-be3a-4205-9224-2fc2219ab5d6.png)
+
 
 ## Technical Challenges
 
