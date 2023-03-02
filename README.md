@@ -74,15 +74,21 @@ After data is loaded into the database, users can make changes from the front en
 
 3.1) Find and plot which transaction type has a high rate of transactions.
 
+
 ![image](https://user-images.githubusercontent.com/118311700/222370781-37f95a0b-b13e-4c31-8497-1d564569a003.png)
+
 
 3.2) Find and plot which state has a high number of customers.
 
+
 ![image](https://user-images.githubusercontent.com/118311700/222371061-b656c63f-a706-4ed1-b596-3f269b308a32.png)
+
 
 3.3) Find and plot the sum of all transactions for the top 10 customers, and which customer has the highest transaction amount.
 
+
 ![image](https://user-images.githubusercontent.com/118311700/222379962-d5bd9e86-e72f-40b6-ace6-ca70a5b8b986.png)
+
 
 
 ### Overview of LOAN application Data API
@@ -100,6 +106,10 @@ The above URL allows you to access information about loan application informatio
 
 4.2) Find the status code of the above API endpoint.
 
+
+![image](https://user-images.githubusercontent.com/118311700/222381173-830b5098-b4e9-4e28-ad49-89cfe3297c73.png)
+
+
 4.3) Once Python reads data from the API, utilize PySpark to load data into RDBMS(SQL). The table name should be "CDW-SAPP_loan_application" in the database. Use the “creditcard_capstone” database.
 
 
@@ -109,9 +119,33 @@ visualize the data according to the below requirements.
 Use Python libraries for the below requirements:
 ### Req-5 Data Analysis and Visualization
 5.1) Find and plot the percentage of applications approved for self-employed applicants.
+    
+    9% Self-EmployedApplicants gets their loan approved.
+    
+
+![image](https://user-images.githubusercontent.com/118311700/222381796-148109d0-8663-4a7a-aa31-757bde42c662.png)
 
 5.2) Find the percentage of rejection for married male applicants.
+     
+     17.03% married males are rejected for loan approval.
+     
+
+![image](https://user-images.githubusercontent.com/118311700/222382241-a83b2acd-f596-40c8-9dcf-f24e5158d954.png)
 
 5.3) Find and plot the top three months with the largest transaction data.
 
+
+![image](https://user-images.githubusercontent.com/118311700/222385708-4eec400b-9240-482b-944c-eb3d41e0317a.png)
+
+
 5.4) Find and plot which branch processed the highest total dollar value of healthcare transactions.
+
+
+
+![image](https://user-images.githubusercontent.com/118311700/222386366-3b2b88cd-be3a-4205-9224-2fc2219ab5d6.png)
+
+## Technical Challenges
+
+The latest version of MySQL connector was not connecting to the MySQL database while updating the modified customer data in the customer module. The problem is resolved by installing the stable version of MySQL connector 8.0.29.
+
+
