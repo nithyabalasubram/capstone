@@ -73,11 +73,15 @@ After data is loaded into the database, users can make changes from the front en
 
 3.1) Find and plot which transaction type has a high rate of transactions.
 
+
 ![image](https://user-images.githubusercontent.com/118311700/223188456-9f53d468-7af1-4c3d-8313-176b27498578.png)
 
 
 
 3.2) Find and plot which state has a high number of customers.
+
+
+
 
 ![image](https://user-images.githubusercontent.com/118311700/223193623-b980f793-9f29-4d0b-a8af-487c42eb8ed3.png)
 
@@ -85,6 +89,8 @@ After data is loaded into the database, users can make changes from the front en
 
 
 3.3) Find and plot the sum of all transactions for the top 10 customers, and which customer has the highest transaction amount.
+
+
 
 ![image](https://user-images.githubusercontent.com/118311700/223188829-6942e7a8-13dc-4188-a0a4-a5e43346282d.png)
 
@@ -106,7 +112,9 @@ The above URL allows you to access information about loan application informatio
 
 4.2) Find the status code of the above API endpoint.
 
+
 ![image](https://user-images.githubusercontent.com/118311700/223190896-3d4ce529-8d67-48e5-8aa5-4698ea3021f6.png)
+
 
 
 4.3) Once Python reads data from the API, utilize PySpark to load data into RDBMS(SQL). The table name should be "CDW-SAPP_loan_application" in the database. Use the “creditcard_capstone” database.
@@ -122,7 +130,9 @@ Use Python libraries for the below requirements:
 9% Self-EmployedApplicants gets their loan approved.
     
     
+    
 ![image](https://user-images.githubusercontent.com/118311700/223191177-e68ac599-dc43-4542-b0f9-989b6d4819d4.png)
+
 
 
 5.2) Find the percentage of rejection for married male applicants.
@@ -130,7 +140,9 @@ Use Python libraries for the below requirements:
 17.03% married males are rejected for loan approval.
      
      
+     
 ![image](https://user-images.githubusercontent.com/118311700/223191450-1f9c33db-4ea8-47c4-a86a-9fbe7352a9e6.png)
+    
     
 
 
@@ -138,14 +150,19 @@ Use Python libraries for the below requirements:
 5.3) Find and plot the top three months with the largest transaction data.
 
 
+
 ![image](https://user-images.githubusercontent.com/118311700/223191688-8b1b77d3-76d1-457d-895e-b0c4937e5cee.png)
+
 
 
 
 5.4) Find and plot which branch processed the highest total dollar value of healthcare transactions.
 
 
+
 ![image](https://user-images.githubusercontent.com/118311700/223195914-62641d0b-e8e8-4b1c-9135-c2d4917aadef.png)
+
+
 
 
 ## Tableau Dashboard Link
