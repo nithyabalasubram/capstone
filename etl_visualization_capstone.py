@@ -5,6 +5,7 @@ findspark.init()
 from pyspark.sql import SparkSession
 from dotenv import load_dotenv
 from pyspark.sql.functions import*
+from datetime import datetime
 from pyspark.sql.types import StringType, IntegerType, BooleanType, DoubleType
 import pandas as pd
 import mysql.connector as mariadb
@@ -303,23 +304,6 @@ def get_data_for_transactions(USER, PWD):
     # Getting the credit card transactions for customers.
     df_customer_cc_info = pd.merge(df_cust, df_trans, how='inner', left_on='CREDIT_CARD_NO', right_on='CUST_CC_NO')
 
-    # Getting the transactions for branches.
-    df_branch_cc_info = pd.merge(df_brch, df_trans,  how='inner', on='BRANCH_CODE')
-
-    # Getting the list of columns to be displayed for modification.
-    customer_columns_info = df_cust.columns.tolist()
-    
-
-    # Removing the unwanted columns that should not be given as option to be modified.
-    customer_columns_info.remove('LAST_UPDATED')
-    customer_columns_info.remove('SSN')
-    customer_columns_info.remove('CREDIT_CARD_NO')
-    customer_columns_info.remove('CUST_COUNTRY')
-    customer_columns_info.remove('FIRST_NAME')
-    customer_columns_info.remove('LAST_NAME')
-    customer_columns_info.remove('MIDDLE_NAME')
-
-
     # Getting the unique values of the transaction type as a list.
     tran_types = pd.unique(df_trans['TRANSACTION_TYPE'])
 
@@ -327,13 +311,14 @@ def get_data_for_transactions(USER, PWD):
     # Getting the unique values of the state as a list.
     branch_state = pd.unique(df_brch['BRANCH_STATE'])
 
-
     # Getting the unique values of the SSN as a list.
-    ssn_number = list(df_cust['SSN'].unique())
+    ssnnum = spark.sql(f"SELECT DISTINCT INT(SUBSTR(SSN, 6, 9)) AS SSN FROM CUSTOMERVIEW").toPandas()
+    ssn_number = ssnnum['SSN'].tolist()
+    
 
-
-    # Getting the unique values of the SSN as a list.
-    cc_number = pd.unique(df_cust['CREDIT_CARD_NO'])
+    # Getting the unique values of the credit card number as a list.
+    ccnum = spark.sql(f"SELECT DISTINCT SUBSTR(CREDIT_CARD_NO, 13, 16) AS CREDIT_CARD_NO FROM CUSTOMERVIEW").toPandas()
+    cc_number = ccnum['CREDIT_CARD_NO'].tolist()
 
 
     # Getting the unique values of the SSN as a list.
@@ -350,11 +335,11 @@ def get_data_for_transactions(USER, PWD):
            'MI', 'MN', 'MO', 'MS', 'MT', 'NC', 'ND', 'NE', 'NH', 'NJ', 'NM',
            'NV', 'NY', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX',
            'UT', 'VA', 'VT', 'WA', 'WI', 'WV', 'WY']
-
-
+    
 
     # Returning the creditcard transaction, customer, branch data as pandas dataframe.
-    return df_trans, df_cust, df_brch, df_customer_cc_info, df_branch_cc_info, customer_columns_info, tran_types, branch_state, usstates,  ssn_number, cc_number, first_name, last_name
+    return df_trans, df_cust, df_brch, df_customer_cc_info, tran_types, branch_state, usstates, ssn_number, cc_number, first_name, last_name
+
 
 
 # Function to validate month
@@ -500,11 +485,11 @@ def transaction_customer_for_zip_month_year():
     ORDER BY DAY(TO_DATE(CR.TIMEID, 'yyyyMMdd')) DESC".format(zipcode, month, year))
 
 
-    print("\nThe Transactions made by customers living in the zip code {} for the month {} and year {}:".format(zipcode, month, year)) 
-    
     # Displaying the customer transaction details.
     if df_result.isEmpty():
         print('\nNo records matching the zipcode {}, month {} and year {} found.'.format(zipcode, month, year))
+    else:
+        print("\nThe Transactions made by customers living in the zip code {} for the month {} and year {}:".format(zipcode, month, year))
 
     df_result.show()
 
@@ -537,12 +522,12 @@ def number_and_total_values_of_transactions(tran_type):
     GROUP BY TRANSACTION_TYPE".format(transaction_type))
 
 
-    print("\nThe Transaction details for the Transaction Type {}:". format(transaction_type))
-
-
     # Displaying the transaction details for a given transaction type.
     if df_result.isEmpty():
         print('\nNo records matching the transaction type {} found.'.format(transaction_type))
+    else:
+        print("\nThe Transaction details for the Transaction Type {}:". format(transaction_type))
+
 
     df_result.show()
 
@@ -561,6 +546,7 @@ def number_and_total_transaction_values_for_branches(branch_states):
 
         # Checking whether the state has only letters and the length is 2.
         if state.isalpha() and len(state) == 2:
+
             # Converting the state to upper case.
             if state in branch_states:
             # If the State exists in the database then it is a valid state.
@@ -569,6 +555,7 @@ def number_and_total_transaction_values_for_branches(branch_states):
             else:
                 # If State does not exist in the table then no branch found.
                 print('\nBranches for the state {} not found. Try again.'.format(state))
+
         else:
             # If the State entered does not have only letters or not of length 2 then it
             # is not a valid State.
@@ -584,12 +571,14 @@ def number_and_total_transaction_values_for_branches(branch_states):
     WHERE B.BRANCH_STATE ='{}' \
     GROUP BY B.BRANCH_NAME".format(state))
 
-    print("\nThe number and total values of transactions for branches in the State {}:".format(state))
-
+   
     # Displaying the transactions for the branches.
     if df_result.isEmpty():
-        print('\nNo data matching criteria.')
+        print('\nNo data matching criteria for the given State {} found.'.format(state))
+    else:
+        print("\nThe number and total values of transactions for branches in the State {}:".format(state))
         
+
     df_result.show()
 
 
@@ -600,25 +589,24 @@ def validate_credit_card_no(cardnumbers):
 
     # Validating the credit card number.
     while True:
-        cardno = input("\nPlease enter the 16 digit Credit Card Number: ")
+        cardno = input("\nPlease enter the last 4 digits of Credit Card Number: ")
         cardno = cardno.strip()
 
-        # Checking the creditcard number has only numbers in it and is of length 16.
-        if cardno.isdigit() and len(cardno) == 16:
+        # Checking the creditcard number has only numbers in it and is of length 4.
+        if cardno.isdigit() and len(cardno) == 4:
             if cardno in cardnumbers:
-                # If the creditcard number has only numbers and is of length 16 then it is a valid number.
-                print("\nCredit Card Number ending with the last 4 digits {} is valid".format(cardno[12:]))
+                # If the creditcard number has only numbers and is of length 4 then it is a valid number.
+                print("\nCredit Card Number ending with the last 4 digits {} is valid.".format(cardno))
                 break
             else:
-                # If the credit card does not have only the numbers or not of length 16 then invalid.
-                print('\nCredit Card Number ending with the last 4 digits {} not found. Try again.'.format(cardno[12:]))
+                # If the credit card does not have only the numbers or not of length 4 then invalid.
+                print('\nCredit Card Number ending with the last 4 digits {} not found. Try again.'.format(cardno))
 
         else:
-            # If the credit card does not have only the numbers or not of length 16 then invalid.
+            # If the credit card does not have only the numbers or not of length 4 then invalid.
             print('\nCredit Card Number {} is invalid. Try again.'.format(cardno))
 
     return cardno
-
 
 
 # Function to validate phone number.
@@ -644,25 +632,26 @@ def validate_phone():
 
 
 
-
 # Function to validate SSN.
-
 def validate_ssn(ssnno):
-
+    
     while True:
         # Get the input for SSN.
-        ssn = input('\nPlease enter the customer SSN in 9 digits: ')
-        ssn = ssn.replace('-','').replace(' ','')
-
-        # Checking if the SSN has only numbers and is of length 9.
-        if ssn.isdigit() and len(ssn) == 9:
+        ssn = input('\nPlease enter the last 4 digits of the customer SSN: ')
+        ssn = ssn.strip()
+       
+        # Checking if the SSN has only numbers and is of length 4.
+        if ssn.isdigit() and len(ssn) == 4:
             ssn_no = int(ssn)
-            # Checking if SSN is valid by checking the valid SSN in the database.
+            
+            # Checking if the SSN exists in the customer table.
             if ssn_no in ssnno:
-                print('\nSSN ending with the last 4 digits {} is valid.'.format(ssn[5:]))
-                break
+              print("\nSSN ending with the last 4 digits {} is valid.".format(ssn))
+              break
+            
             else:
-                print("\nSSN ending with the last 4 digits {} not found. Try Again.".format(ssn[5:]))
+              print('\nSSN ending with the last 4 digits {} is not found.'.format(ssn))
+                                         
         else:
             print('\nSSN {} is invalid. Try again.'.format(ssn))
 
@@ -714,113 +703,93 @@ def validate_lastname(lstname):
 
 
 
-
 # Function to check the existing account details of a customer.
-def check_customer_account_details(cardnumbers, df_cus, fstname, lstname):
+def check_customer_account_details(cardnumbers, ssnno, fstname, lstname):
 
     menu = ''
     opt = ''    
     menu = ('\n'
-            '1) Use Credit Card Number to get the account details.\n'
-            '2) Use Phone Number to get the account details.\n'
-            '3) Use SSN to get the account details.\n')
+            '1) Using credit card number.\n'
+            '2) Using SSN.\n')
    
     print(menu)
-    opt= input('Please choose option 1 for Credit Card or 2 for Phone Number or 3 for SSN: ')
-    opt = opt.strip()
+    while True:
+        opt= input('Please choose option 1 for Credit Card or 2 for SSN: ')
+        opt = opt.strip()
+       
+        # Creditcard number.
+        if opt == '1':
 
-    # Creditcard number.
-    if opt == '1':
+            # Validating the credit card number.
+            cardno = validate_credit_card_no(cardnumbers)
 
-        # Validating the credit card number.
-        cardno = validate_credit_card_no(cardnumbers)
-    
-   
-    # Phone number.    
-    elif opt == '2':
+            # Validate the phone number.
+            phone = validate_phone()
 
-        # Validate the phone number.
-        phone = validate_phone()
+            break 
 
-        # Validate the first name.
-        fname = validate_firstname(fstname)
+        # SSN.    
+        elif opt == '2':
+
+            # Validate the credit card number.
+            ssn = validate_ssn(ssnno)
+            ssn_num = int(ssn)
+
+            # Validate the first name.
+            fname = validate_firstname(fstname)
      
-        # Validate the last name.
-        lname = validate_lastname(lstname) 
+            # Validate the last name.
+            lname = validate_lastname(lstname)
 
-   
-    # SSN.   
-    elif opt == '3':
-
-        # Validate the credit card number.
-        ssn = validate_ssn(ssnno)
-        ssn_num = int(ssn)
-
-        # Validate the first name.
-        fname = validate_firstname(fstname)
-     
-        # Validate the last name.
-        lname = validate_lastname(lstname) 
+            break 
+        
+        else:
+            print("\nOption {} is invalid. Try Again.".format(opt))
 
                         
-    # Creditcard number.
+    # # Creditcard Number.
     if opt == '1':
-
-        # Fetching the existing account details of a customer from the customer table for the given creditcard number.
-
-        df_result = spark.sql(f"SELECT FIRST_NAME, MIDDLE_NAME, LAST_NAME, \
-        REPLACE(CREDIT_CARD_NO, SUBSTR(CREDIT_CARD_NO, 1, 12), '************') AS CREDIT_CARD_NO, \
-        FULL_STREET_ADDRESS, CUST_CITY AS CITY, CUST_STATE AS STATE, CUST_COUNTRY AS COUNTRY, CUST_ZIP AS ZIP, \
-        CUST_PHONE AS PHONE_NUMBER, CUST_EMAIL AS EMAIL, LAST_UPDATED \
-        FROM CUSTOMERVIEW WHERE CREDIT_CARD_NO = '{cardno}'")
-
-    # Phone Number.
-    elif opt == '2':
-
-        # Fetching the existing account details of a customer from the customer table for the given phone number.
+             
+        # Fetching the existing account details of a customer from the customer table for the given creditcard number and phone number.
 
         df_result = spark.sql(f"SELECT FIRST_NAME, MIDDLE_NAME, LAST_NAME, \
-        REPLACE(CREDIT_CARD_NO, SUBSTR(CREDIT_CARD_NO, 1, 12), '************') AS CREDIT_CARD_NO, \
+        SUBSTR(CREDIT_CARD_NO, 13, 16) AS CC_NO, \
         FULL_STREET_ADDRESS, CUST_CITY AS CITY, CUST_STATE AS STATE, CUST_COUNTRY AS COUNTRY, CUST_ZIP AS ZIP, \
         CUST_PHONE AS PHONE_NUMBER, CUST_EMAIL AS EMAIL, LAST_UPDATED \
-        FROM CUSTOMERVIEW WHERE CUST_PHONE = '{phone}' AND FIRST_NAME = '{fname}' AND LAST_NAME = '{lname}'")
+        FROM CUSTOMERVIEW WHERE CREDIT_CARD_NO LIKE '%{cardno}' AND CUST_PHONE = '{phone}'")
+
+        # Checking if record exists in the database table.
+        # Credit card number
+        if df_result.isEmpty():
+            print("\nNo records for the credit card number ending with the last four digits {} with the phone number {} found.".format(cardno, phone))
+       
+        else:
+            print("\nCustomer account details for the credit card number ending with the last four digits {} with the phone number {} found.".format(cardno, phone))
 
 
     # SSN.
-    elif opt == '3':
-
-        # Fetching the existing account details of a customer from the customer table for the given SSN, firstname and lastname.
+    elif opt == '2':
+ 
+       # Fetching the existing account details of a customer from the customer table for the given SSN, firstname and lastname.
 
         df_result = spark.sql(f"SELECT FIRST_NAME, MIDDLE_NAME, LAST_NAME, \
-        REPLACE(CREDIT_CARD_NO, SUBSTR(CREDIT_CARD_NO, 1, 12), '************') AS CREDIT_CARD_NO, \
+        SUBSTR(CREDIT_CARD_NO, 13, 16) AS CC_NO, \
         FULL_STREET_ADDRESS, CUST_CITY AS CITY, CUST_STATE AS STATE, CUST_COUNTRY AS COUNTRY, CUST_ZIP AS ZIP, \
         CUST_PHONE AS PHONE_NUMBER, CUST_EMAIL AS EMAIL, LAST_UPDATED \
-        FROM CUSTOMERVIEW WHERE SSN = {ssn_num} AND FIRST_NAME = '{fname}' AND LAST_NAME = '{lname}'")
-
-    
-                          
-    # Checking if record exists in the database table.
-    if df_result.isEmpty():
-
-        # Credit card number
-        if opt == '1':
-            print("\nNo records for the credit card number ending with the last four digits {} with the first name {} and last name {} found.".format(cardno[12:], fname, lname))
-
+        FROM CUSTOMERVIEW WHERE SSN LIKE '%{ssn_num}' AND FIRST_NAME = '{fname}' AND LAST_NAME = '{lname}'")
         
-        # Phone number
-        elif opt == '2':
-            print("\nNo records for the phone number {} with the first name {} and last name {} found.".format(phone, fname, lname))
-
-        # SSN number    
-        elif opt == '3':
-            print("\nNo records for the social security number ending with the last four digits {} with the first name {} and last name {} found.".format(ssn[5:], fname, lname))
-
-
-
+        # Checking if record exists in the database table.
+        # SSN number   
+        if df_result.isEmpty():
+           print("\nNo records for the social security number ending with the last four digits {} with the first name {} and last name {} found.".format(ssn, fname, lname))
+        
+        else:
+            print("\nCustomer account details for the social security number ending with the last four digits {} with the first name {} and last name {} found.".format(ssn, fname, lname))  
+  
     # Displaying the existing account details of a customer from the customer table.
     df_result.show()
 
-
+    
 
 # Function to validate the email.
 def valid_email(email):
@@ -833,9 +802,11 @@ def valid_email(email):
 
 
 # Function to modify the existing account details of a customer.
-def modify_existing_account_details_of_a_customer(customer_columns, ssnno, states, USER, PWD):
-  
-    # Validating the credit card number.
+def modify_existing_account_details_of_a_customer(df_tran, ssnno, states, USER, PWD):
+    
+    no_of_records = 0
+
+    # Validating the SSN.
     ssn = validate_ssn(ssnno)
 
 
@@ -848,25 +819,23 @@ def modify_existing_account_details_of_a_customer(customer_columns, ssnno, state
         
         # checking whether the database is connected.
         if mydb.is_connected():
-            db_Info = mydb.get_server_info()
             mycursor = mydb.cursor()
 
-            # Checking whether the customer record dxists in the customer table for the given credit card number.
+            # Checking whether the customer record dxists in the customer table for the given SSN.
             ssn_number = int(ssn)
-            st ="SELECT * FROM CDW_SAPP_CUSTOMER WHERE SSN = '{}'"
+            st ="SELECT * FROM CDW_SAPP_CUSTOMER WHERE SSN LIKE '%{}'"
             mycursor.execute(st.format(ssn_number))
             result= mycursor.fetchall()
-           
-            # If a customer record exists for the given credit card number then allow to modify.
+                      
+            # If a customer record exists for the given SSN then allow to modify.
             if len(result) == 0:
-               print('No customer record for the given Social Security number {} found.'.format(ssn[5:]))
+               print('No customer record for the given Social Security number {} found.'.format(ssn))
             
             else:
-                # Populating the dictionary with the selected record details from the database. 
                 cus_data = {}
                 apt = ''
                 aptno = ''
-
+                
                 # Populating the dictionary with the selected values from the database for the entered SSN.
                 cus_data['SSN'] = result[0][0]
                 cus_data['CREDIT_CARD_NO'] = result[0][4]
@@ -878,24 +847,26 @@ def modify_existing_account_details_of_a_customer(customer_columns, ssnno, state
                 cus_data['CUST_PHONE'] = result[0][10]
                 cus_data['CUST_EMAIL'] = result[0][11]
                 cus_data['COUNT'] = 0
-                count = 1
-                
+                                
                 # Display the menu of customer fields to be modified. 
-                for c in customer_columns:
-                    print(' ' + str(count) + ') ' + c)
-                    count += 1
-                print(' ' + str(count) + ') Exit')
+                cmenu = ('\n'
+                          '1) Full Address\n'
+                          '2) Phone Number\n'
+                          '3) E-Mail Address\n'
+                          '4) Exit\n')
+   
+                print(cmenu)
                 
                 while True:
-                    print('\nPlease choose the option you would like to modify:')
+                    print('\nPlease choose the option you would like to modify: ')
                     option = input('Please enter option: ')
                     option = option.strip()
                     if option.isdigit():
-                        if int(option) <= len(customer_columns):
-                            column_name = customer_columns[int(option)-1]
-                            if option == '1': # FULL_STREET_ADDRESS
-                                 while True: 
-                                    new_entry = input('\nPlease enter new ' + column_name + ': ')
+                            
+                            # Validating the full address.
+                            if option == '1':
+                                while True: 
+                                    new_entry = input('\nPlease enter new Full Street Address: ')
                                     new_entry = new_entry.strip()
                                     aptno = new_entry.split()[0]
                                     apt = new_entry.split(',')[0]
@@ -910,10 +881,10 @@ def modify_existing_account_details_of_a_customer(customer_columns, ssnno, state
                                             print('\nFull street address {} is invalid. Try again.'.format(new_entry))
                                     else:
                                         print('\nFull street address {} is invalid. Please enter Apartment No. or House Number in the beginning. Try again.'.format(new_entry))
-                                    
-                            elif option == '2': # CUST_CITY
+                                
+                                # Validating the City.  
                                 while True: 
-                                    new_entry = input('\nPlease enter new ' + column_name + ': ')
+                                    new_entry = input('\nPlease enter new City: ')
                                     new_entry = new_entry.strip().title()
                                     if new_entry.isalpha():
                                        cus_data['CUST_CITY'] = new_entry
@@ -922,46 +893,52 @@ def modify_existing_account_details_of_a_customer(customer_columns, ssnno, state
                                     else:
                                         print('\nCity {} is invalid. Please enter only letters. Try again.'.format(new_entry))
 
-                            elif option == '3': # CUST_STATE
+                                # Validating the State.
                                 while True:
-                                    new_entry = input('\nPlease enter new ' + column_name + ' in 2 letters: ')
+                                    new_entry = input('\nPlease enter new State in 2 letters: ')
                                     new_entry = new_entry.strip().upper()
                                     if new_entry.isalpha() and len(new_entry) == 2 and new_entry in states:
                                        cus_data['CUST_STATE'] = new_entry
                                        cus_data['COUNT'] += 1  
+                                       print('\nState {} is valid.'.format(new_entry)) 
                                        break
                                     else:
                                         print('\nState {} is invalid. Try again.'.format(new_entry))
 
-                            elif option == '4': # CUST_ZIP
-                                  
-                                  new_entry = validate_zipcode()
-                                  cus_data['CUST_ZIP'] = int(new_entry)
-                                  cus_data['COUNT'] += 1  
-                      
-                            elif option == '5': # CUST_PHONE
+                                # Validating the Zipcode.
+                                new_entry = validate_zipcode()
+                                cus_data['CUST_ZIP'] = int(new_entry)
+                                cus_data['COUNT'] += 1  
+
+                            # Validating Phone Number.
+                            elif option == '2':
                                 
                                 new_entry = validate_phone()
                                 cus_data['CUST_PHONE'] = new_entry
                                 cus_data['COUNT'] += 1  
-                         
-                            elif option == '6': # CUST_EMAIL
+
+                            # Validating E-Mail Address.
+                            elif option == '3':
                                 while True: 
-                                    new_entry = input('\nPlease enter new ' + column_name + '. Please use the format abc@test.com: ')
+                                    new_entry = input('\nPlease enter new E-Mail Address. Please use the format abc@test.com: ')
                                     new_entry = new_entry.strip()
                                     if valid_email(new_entry):
                                        cus_data['CUST_EMAIL'] = new_entry
-                                       cus_data['COUNT'] += 1  
+                                       cus_data['COUNT'] += 1
+                                       print('\nE-mail {} is valid.'.format(new_entry))
                                        break
                                     else:
-                                        print('\nE-mail {} is invalid. Try again.'.format(new_entry))
+                                       print('\nE-mail {} is invalid. Try again.'.format(new_entry))
                         # Exit
-                        elif int(option) == count:
-                            break
-                        else:
-                            print('\nOption {} is invalid. Try again.'.format(option))
+                            elif option == '4':
+                                break
+
+                            else:
+                                print('\nOption {} is invalid. Try again.'.format(option))
+                       
                     else:
                         print('\nOption {} is invalid. Try again.'.format(option))
+
 
                 # Checking the count in the dictionary to see if any field has been modified.
                 if cus_data['COUNT'] > 0:
@@ -981,22 +958,24 @@ def modify_existing_account_details_of_a_customer(customer_columns, ssnno, state
                                 
                     # Checking if there are any records that got updated and displaying the modified record.
                     if mycursor.rowcount > 0:
-                        ssn_number = int(ssn)
-                        print('\n{} Customer record modified for the Social Security Number ending with the last four digits {}.'.format(mycursor.rowcount, ssn[5:]))
-
                         
+                        ssn_number = int(ssn)
+                        no_of_records = mycursor.rowcount
+
+                        print('\n{} Customer record modified for the Social Security Number ending with the last four digits {}.\n'.format(mycursor.rowcount, ssn))
+
                         st1 ="SELECT FIRST_NAME, MIDDLE_NAME, LAST_NAME, REPLACE(CREDIT_CARD_NO, SUBSTR(CREDIT_CARD_NO, 1, 12), '************') AS CREDIT_CARD_NO, \
                         FULL_STREET_ADDRESS, CUST_CITY, CUST_STATE, CUST_COUNTRY, CUST_ZIP, CUST_PHONE, \
                         CUST_EMAIL, LAST_UPDATED \
-                        FROM CDW_SAPP_CUSTOMER WHERE SSN = '{}'"
-
+                        FROM CDW_SAPP_CUSTOMER WHERE SSN LIKE '%{}'"
 
                         mycursor.execute(st1.format(ssn_number))
                         output= mycursor.fetchall()
                         print(output[0])
-
+                                                                     
                     else:
-                        print('\nNo Customer record modified for the Social Security Number ending with the last four digits {}.'.format(ssn[5:])) 
+                        # No record exists 
+                        print('\nNo Customer record modified for the Social Security Number ending with the last four digits {}.'.format(ssn)) 
 
     
     # Getting the error.           
@@ -1010,7 +989,26 @@ def modify_existing_account_details_of_a_customer(customer_columns, ssnno, state
             mycursor.close()
             mydb.close()
 
-            
+        if no_of_records > 0:
+        
+            # Getting the modified records from customer database table in the 
+            # creditcard_capstone database.
+            df_customers= get_records_from_database_table(USER, PWD, "creditcard_capstone.cdw_sapp_customer")
+                    
+            # Creating a temporary view for the customer data.
+            df_customers.createOrReplaceTempView("customerview")
+
+            # Customer data.
+            df_cust = df_customers.toPandas()
+
+            # Getting the credit card transactions for customers.
+            df_customer_cc_info = pd.merge(df_cust, df_tran, how='inner', left_on='CREDIT_CARD_NO', right_on='CUST_CC_NO')
+
+
+    return df_customers, df_cust, df_customer_cc_info
+
+
+
    
 # Function to generate a monthly bill for a credit card number for a given month and year.
 def credit_card_monthly_bill_for_a_month_and_year(cardnumbers):
@@ -1028,7 +1026,7 @@ def credit_card_monthly_bill_for_a_month_and_year(cardnumbers):
     # given month and year.
     df_result = spark.sql(f"SELECT REPLACE(CUST_CC_NO, SUBSTR(CUST_CC_NO, 1, 12), ('************')) AS CREDIT_CARD_NO, \
     ROUND(SUM(TRANSACTION_VALUE), 2) AS TOTAL_TRANSACTION_VALUE \
-    FROM CREDITVIEW WHERE CUST_CC_NO = '{cardno}' AND MONTH(TO_DATE(TIMEID, 'yyyyMMdd')) = '{month}' \
+    FROM CREDITVIEW WHERE CUST_CC_NO LIKE '%{cardno}' AND MONTH(TO_DATE(TIMEID, 'yyyyMMdd')) = '{month}' \
     AND YEAR(TO_DATE(TIMEID, 'yyyyMMdd')) = '{year}' \
     GROUP BY CUST_CC_NO")
 
@@ -1036,9 +1034,11 @@ def credit_card_monthly_bill_for_a_month_and_year(cardnumbers):
     # Checing whether an entry exists in the database for the given input.
     if df_result.isEmpty():
         print('\nNo record matching the credit card number ending with the last four digits {} for \
-            the month {} and year{} found.'.format(cardno[12:], month, year))
-        
+            the month {} and year{} found.'.format(cardno, month, year))
+    else:
+        print('\nCustomer account details for the credit card number ending with the last four digits {} for the month {} and year {} found.'.format(cardno, month, year))
 
+ 
     # Displaying the credit card transaction details for a
     # given month and year.
 
@@ -1050,40 +1050,44 @@ def credit_card_monthly_bill_for_a_month_and_year(cardnumbers):
 # Order by year, month and day in descending order.
 
 def transactions_by_a_customer_between_dates(cardnumbers):
-
    
     # Validating the credit card number.
     cardno = validate_credit_card_no(cardnumbers)
 
-    # Validating the startday.
-    startday = validate_day('start day')
-
-    # Validating the startmonth.
-    startmonth = validate_month('start month')
-        
-    # Validating the startyear.
-    startyear = validate_year('start year')
-
-    # Validating the endday.
-    endday = validate_day('end day')
   
-    # Validating the endmonth.
-    endmonth = validate_month('end month')
-        
-    # Validating the endyear.
-    endyear = validate_year('end year')
-  
-    # Concatenating the year, month and day to get the timeid.
-    startyear = str(startyear)
-    endyear = str(endyear)
-    starttimeid = startyear + startmonth + startday
-    endtimeid = endyear + endmonth + endday
+    # Validating the start date.
+    while True:
+         
+        # Getting the start date as input.
+        startdate = input("\nPlease enter the start date in the format YYYY-MM-DD: ")
+        try:
+            startdate = datetime.strptime(startdate, '%Y-%m-%d').date()
+            starttimeid = str(startdate.year) + str(startdate.month).zfill(2) + str(startdate.day).zfill(2)
+            break
+        except:
+            print('\nStart date {} is invalid. Try Again.'.format(startdate))
 
-    startdate = startyear + '-' + startmonth + '-' + startday
-    enddate = endyear + '-' + endmonth + '-' + endday
+
+    # Validating the end date.
+    while True:
+         
+        # Getting the end date as input.
+        enddate = input("\nPlease enter the end date in the format YYYY-MM-DD: ")
+        try:
+            enddate = datetime.strptime(enddate, '%Y-%m-%d').date()
+
+            # Checking if end date is greater than start date.
+            if enddate < startdate:
+                print("\nEnd date {} should be greater than the start date {}.".format(enddate, startdate))
+                continue
+            
+            endtimeid = str(enddate.year) + str(enddate.month).zfill(2) + str(enddate.day).zfill(2)
+            break
+
+        except: 
+            print('\nEnd date {} is invalid. Try Again.'.format(enddate))
 
  
-   
     # Fetching the records to display the transactions made by a customer between
     # two dates. Order by year, month, and day in descending order.
 
@@ -1091,15 +1095,20 @@ def transactions_by_a_customer_between_dates(cardnumbers):
     CONCAT(SUBSTR(TIMEID, 1, 4), '-', SUBSTR(TIMEID, 5, 2), '-', SUBSTR(TIMEID, 7, 2)) AS TRANSACTION_DATE, \
     BRANCH_CODE, TRANSACTION_TYPE, ROUND(TRANSACTION_VALUE, 2) AS TRANSACTION_VALUE, \
     TRANSACTION_ID FROM CREDITVIEW \
-    WHERE CUST_CC_NO = '{cardno}' AND (TIMEID >= '{starttimeid}' \
+    WHERE CUST_CC_NO LIKE '%{cardno}' AND (TIMEID >= '{starttimeid}' \
     AND TIMEID <= '{endtimeid}') \
     ORDER BY YEAR(TO_DATE(TIMEID, 'yyyyMMdd')) DESC, MONTH(TO_DATE(TIMEID, 'yyyyMMdd')) DESC, DAY(TO_DATE(TIMEID, 'yyyyMMdd')) DESC")
+
 
     # Checking whether an entry exists in the database for the given input.
     if df_result.isEmpty():
         
-        print('\nNo records matching the creditcard number ending with the last 4 digits {} with the start date {} and the end date {} found.'.format(cardno[12:], startdate, enddate))
+        print('\nNo records matching the creditcard number ending with the last 4 digits {} with the start date {} and end date {} found.'.format(cardno, startdate, enddate))
     
+    else:
+        print('\nCustomer transaction details for the credit card number ending with the last 4 digits {} with the start date {} and end date {} found.'.format(cardno, startdate, enddate))
+
+
     # displaying the transactions made by a customer between
     # two dates. Order by year, month, and day in descending order.
 
@@ -1140,7 +1149,10 @@ def high_rate_of_tran_by_tran_type(df_tran):
 
     # annotate value labels to each country.
     for index, value in enumerate(types): 
-        plt.text(value+10, index-0.1, str(value))
+        if value == types.max(axis=0):
+            plt.text(value+10, index-0.1, str(value), bbox=dict(facecolor='yellow',alpha=0.5), fontweight = 'bold')
+        else:
+            plt.text(value+10, index-0.1, str(value))
            
     plt.show() 
 
@@ -1174,7 +1186,10 @@ def state_with_high_no_of_customers(df_cus):
 
     # Displaying the number of customers for the state.
     for index, value in enumerate(states): 
-      plt.text(value+0.6, index-0.4, str(value))
+      if value == states.max(axis=0):
+        plt.text(value+0.6, index-0.6, str(value), bbox=dict(facecolor='yellow',alpha=0.5), fontweight = 'bold')
+      else:
+        plt.text(value+0.6, index-0.4, str(value))
   
     plt.show() 
 
@@ -1197,17 +1212,22 @@ def highest_and_sum_of_transactions_for_top10(df_customer_cc):
     # Plotting the graph for the top 10 customers having the highest total values of transactions.
     top10.plot(kind='barh', figsize=(10, 5), xlim=(4800,5800), color=top10_colors)
 
-    # Placing text i.e. sum of all transactions at the end of bar
-    for index, value in enumerate(top10): 
-        plt.text(value+10, index-0.25, '$'+str(value))
      
-
     # Setting the plot.
     plt.title('Top 10 Total Transaction Amounts Per Customer', fontweight = 'bold', fontsize = 18)
     # Setting the x-label.
     plt.xlabel('Total Transaction Amount', fontweight = 'bold', fontsize = 14)
     # Setting the y-label.
     plt.ylabel('Account Number', fontweight = 'bold', fontsize = 14)
+
+    
+    # Placing text i.e. sum of all transactions at the end of bar
+    for index, value in enumerate(top10): 
+        if value == top10.max(axis=0):
+            plt.text(value+10, index-0.25, '$' +str(value), bbox=dict(facecolor='yellow',alpha=0.5), fontweight = 'bold')
+        else:
+            plt.text(value+10, index-0.25, '$'+str(value))
+   
     
     plt.show()
 
@@ -1319,10 +1339,10 @@ def approved_applications_for_self_employed(df_loan_data):
      # Plotting the pie chart for the percentage of applications approved for self-employed applicants.
      df_loan_info.plot(kind='pie',
                              figsize=(12, 6),
-                             autopct='%1.2f%%', 
+                             autopct=lambda p: '{:.2f}%({:.0f})'.format(p,(p/100)*df_loan_info.sum()),
                              startangle=90,
                              labels=None,         # turn off labels on pie chart
-                             pctdistance=1.12,    # the ratio between the center of each pie slice and the start of the text generated by autopct 
+                             pctdistance=1.28,    # the ratio between the center of each pie slice and the start of the text generated by autopct 
                              legend = True,
                              explode=(0, 0, 0.1, 0),
                              colors=colors_list
@@ -1336,7 +1356,7 @@ def approved_applications_for_self_employed(df_loan_data):
 
      # Adding the legend
      legend_labels = ['Approved Not Self-Employed', 'Not Approved Not Self-Employed', 'Approved Self-Employed', 'Not Approved Self-Employed' ]  
-     plt.legend(labels=legend_labels) #, loc = 'upper left' ) 
+     plt.legend(labels=legend_labels)
 
      plt.show()
 
@@ -1354,10 +1374,10 @@ def percentage_of_rejection_for_married_male(df_loan_data):
     # Plotting  a pie chart to show the percentage of rejection for married male applicants.
     df_loan.plot(kind='pie',
                             figsize=(14, 6),
-                            autopct='%1.2f%%', 
+                            autopct = lambda p: '{:.2f}%({:.0f})'.format(p,(p/100)*df_loan.sum()),
                             startangle=250,
                             labels=None,         # turn off labels on pie chart
-                            pctdistance=1.12,    # the ratio between the center of each pie slice and the start of the text generated by autopct
+                            pctdistance=1.19,    # the ratio between the center of each pie slice and the start of the text generated by autopct
                             legend = True,
                             explode=(0, 0.1, 0, 0, 0, 0, 0, 0),
                             colors = colors_list
@@ -1395,6 +1415,7 @@ def top3_months_largest_transaction_data(df_tran):
 
     # Plotting the top 3 months with the largest transaction data.
     top_3.plot(kind='barh', figsize=(10, 5), xlim=(3900, 3970), color=top3_colors)
+
     
     # Setting the title.
     plt.title('Top 3 Total Number of Transactions Per Month', fontweight = 'bold', fontsize = 18)
@@ -1403,9 +1424,10 @@ def top3_months_largest_transaction_data(df_tran):
     # Setting the y-label
     plt.ylabel('Month', fontweight = 'bold', fontsize = 14)
 
+
     # Getting the transaction value to be displayed near the bar of the graph
     for index, value in enumerate(top_3):
-      plt.text(value+1, index-0.04, str(value))
+      plt.text(value+1, index-0.04, str(value), bbox=dict(facecolor='yellow',alpha=0.5), fontweight = 'bold')
 
   
     plt.show()
@@ -1526,24 +1548,8 @@ if __name__ == '__main__':
     populate_loan_table_only_if_not_exists(USER,PWD)
 
 
-    # Fetching all the creditcard transaction, customer and branch data from the creditcard_capstone database.
-    df_transactions, df_customers, df_branches = get_creditcard_info(USER, PWD)
-
-
-    # Creating a temporary view for the creditcard transaction data.
-    df_transactions.createOrReplaceTempView("creditview")
-
-    # Creating a temporary view for the customer data.
-    df_customers.createOrReplaceTempView("customerview")
-
-    # Creating a temporary view for the branch data.
-    df_branches.createOrReplaceTempView("branchview")
-
-
-
     # Function to get all the transaction data into pandas dataframe for visualization.
-
-    df_tran, df_cus, df_br, df_customer_cc, df_branch_cc, customer_columns, tran_type, branch_states, states, ssnno, cardnumbers, fstname, lstname = \
+    df_tran, df_cus, df_br, df_customer_cc, tran_type, branch_states, states, ssnno, cardnumbers, fstname, lstname = \
     get_data_for_transactions(USER, PWD)
 
 
@@ -1697,22 +1703,8 @@ if __name__ == '__main__':
                 elif option == '2':
 
                     # Function to modify the existing account details of a customer.
-                    modify_existing_account_details_of_a_customer(customer_columns, ssnno, states, USER, PWD) 
-                    
-                    # Function to get the records from customer database table in the 
-                    # creditcard_capstone database.
-                    df_customers= get_records_from_database_table(USER, PWD, "creditcard_capstone.cdw_sapp_customer")
-                    
-                    # Creating a temporary view for the customer data.
-                    df_customers.createOrReplaceTempView("customerview")
-
-                    # Customer data.
-                    df_cust = df_customers.toPandas()
-
-                    # Getting the credit card transactions for customers.
-                    df_customer_cc_info = pd.merge(df_cust, df_tran, how='inner', left_on='CREDIT_CARD_NO', right_on='CUST_CC_NO')
-
-             
+                    df_customers, df_cust, df_customer_cc_info = modify_existing_account_details_of_a_customer(df_tran, ssnno, states, USER, PWD)
+                                
                     while True:
                         print(return_quit_c)
                         option = input('Please enter an option: ')
