@@ -3,6 +3,14 @@ Capstone project
 
 ## Project requirements:
 
+
+## Workflow Diagram of the Requirements:
+
+
+![image](https://user-images.githubusercontent.com/118311700/223203822-b9cd8e8d-ece1-4590-a4c2-2d315555e9a9.png)
+
+
+
 ## Credit Card Dataset Overview
 The Credit Card System database is an independent system developed for managing activities
 such as registering new customers and approving or canceling requests, etc., using the
