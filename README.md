@@ -70,25 +70,23 @@ Once data is loaded into the database, we need a front-end (console) to see/disp
 After data is loaded into the database, users can make changes from the front end, and they can also view data from the front end. Now, the business analyst team wants to analyze and visualize the data according to the below requirements. Use Python libraries for the below requirements:
 ### Req - 3 Credit Card Data Analysis and Visualization
 
+
 3.1) Find and plot which transaction type has a high rate of transactions.
 
+![image](https://user-images.githubusercontent.com/118311700/223188456-9f53d468-7af1-4c3d-8313-176b27498578.png)
 
-
-![image](https://user-images.githubusercontent.com/118311700/222370781-37f95a0b-b13e-4c31-8497-1d564569a003.png)
 
 
 3.2) Find and plot which state has a high number of customers.
 
+![image](https://user-images.githubusercontent.com/118311700/223193623-b980f793-9f29-4d0b-a8af-487c42eb8ed3.png)
 
 
-![image](https://user-images.githubusercontent.com/118311700/222371061-b656c63f-a706-4ed1-b596-3f269b308a32.png)
 
 
 3.3) Find and plot the sum of all transactions for the top 10 customers, and which customer has the highest transaction amount.
 
-
-
-![image](https://user-images.githubusercontent.com/118311700/222379962-d5bd9e86-e72f-40b6-ace6-ca70a5b8b986.png)
+![image](https://user-images.githubusercontent.com/118311700/223188829-6942e7a8-13dc-4188-a0a4-a5e43346282d.png)
 
 
 
@@ -105,10 +103,10 @@ The above URL allows you to access information about loan application informatio
 ### Req-4 Access to Loan API Endpoint
 4.1) Create a Python program to GET (consume) data from the above API endpoint for the loan application dataset.
 
+
 4.2) Find the status code of the above API endpoint.
 
-
-![image](https://user-images.githubusercontent.com/118311700/222381173-830b5098-b4e9-4e28-ad49-89cfe3297c73.png)
+![image](https://user-images.githubusercontent.com/118311700/223190896-3d4ce529-8d67-48e5-8aa5-4698ea3021f6.png)
 
 
 4.3) Once Python reads data from the API, utilize PySpark to load data into RDBMS(SQL). The table name should be "CDW-SAPP_loan_application" in the database. Use the “creditcard_capstone” database.
@@ -124,30 +122,31 @@ Use Python libraries for the below requirements:
 9% Self-EmployedApplicants gets their loan approved.
     
     
+![image](https://user-images.githubusercontent.com/118311700/223191177-e68ac599-dc43-4542-b0f9-989b6d4819d4.png)
 
-![image](https://user-images.githubusercontent.com/118311700/222381796-148109d0-8663-4a7a-aa31-757bde42c662.png)
 
 5.2) Find the percentage of rejection for married male applicants.
 
 17.03% married males are rejected for loan approval.
      
      
+![image](https://user-images.githubusercontent.com/118311700/223191450-1f9c33db-4ea8-47c4-a86a-9fbe7352a9e6.png)
+    
 
-![image](https://user-images.githubusercontent.com/118311700/222382241-a83b2acd-f596-40c8-9dcf-f24e5158d954.png)
+
 
 5.3) Find and plot the top three months with the largest transaction data.
 
 
+![image](https://user-images.githubusercontent.com/118311700/223191688-8b1b77d3-76d1-457d-895e-b0c4937e5cee.png)
 
-![image](https://user-images.githubusercontent.com/118311700/222385708-4eec400b-9240-482b-944c-eb3d41e0317a.png)
 
 
 5.4) Find and plot which branch processed the highest total dollar value of healthcare transactions.
 
 
+![image](https://user-images.githubusercontent.com/118311700/223195914-62641d0b-e8e8-4b1c-9135-c2d4917aadef.png)
 
-
-![image](https://user-images.githubusercontent.com/118311700/222386366-3b2b88cd-be3a-4205-9224-2fc2219ab5d6.png)
 
 ## Tableau Dashboard Link
 
