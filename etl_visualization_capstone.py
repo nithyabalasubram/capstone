@@ -1181,7 +1181,7 @@ def state_with_high_no_of_customers(df_cus):
     # Setting the x-label.
     plt.xlabel('Total Number of Customers', fontweight = 'bold', fontsize = '14')
     # Setting the y-label.
-    plt.ylabel('State', fontweight = 'bold', fontsize = 14)
+    plt.ylabel('States', fontweight = 'bold', fontsize = 14)
 
 
     # Displaying the number of customers for the state.
@@ -1422,7 +1422,7 @@ def top3_months_largest_transaction_data(df_tran):
     # Setting the x-label
     plt.xlabel('Number of Transactions', fontweight = 'bold', fontsize = 14)
     # Setting the y-label
-    plt.ylabel('Month', fontweight = 'bold', fontsize = 14)
+    plt.ylabel('Months', fontweight = 'bold', fontsize = 14)
 
 
     # Getting the transaction value to be displayed near the bar of the graph
